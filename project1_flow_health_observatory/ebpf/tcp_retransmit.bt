@@ -1,0 +1,8 @@
+#!/usr/bin/env bpftrace
+/* Emits one JSON line for every TCP retransmission. Linux only; root or BPF privileges required. */
+tracepoint:tcp:tcp_retransmit_skb
+{
+    printf("{\"event\":\"tcp_retransmit\",\"timestamp_ns\":%llu,\"family\":%d,\"source_ip\":\"%s\",\"source_port\":%d,\"destination_ip\":\"%s\",\"destination_port\":%d}\n",
+           nsecs, args->family, ntop(args->family, args->saddr), args->sport,
+           ntop(args->family, args->daddr), args->dport);
+}
