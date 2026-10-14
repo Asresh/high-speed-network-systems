@@ -32,6 +32,8 @@ ebpf/
   tcp_retransmit.bt   Linux TCP retransmission tracepoint
 tools/
   stream_trace.py     bpftrace to HTTP adapter
+  setup_netns_lab.sh  isolated veth pair with tc netem impairments
+  cleanup_netns_lab.sh remove only the dedicated lab namespaces
 samples/
   retransmission-burst.jsonl  representative trace events
 tests/
@@ -109,6 +111,22 @@ sudo python3 tools/stream_trace.py --api http://127.0.0.1:8080
 
 Generate ordinary TCP traffic in another terminal and inspect `/v1/flows`. Kernel tracepoint fields and BPF permissions vary by Linux distribution and kernel configuration. The synthetic demo is the portable baseline when live tracing is unavailable.
 
+### Optional isolated `tc` and firewall lab
+
+On a disposable Linux host with `iproute2`, `iptables`, and root privileges, create two dedicated network namespaces joined by a veth pair:
+
+```bash
+sudo bash tools/setup_netns_lab.sh
+```
+
+The script applies delay and loss only to the lab interface using `tc netem`. To add a destination port drop inside the isolated source namespace, set `FLOWLAB_DROP=1` when creating the lab. Then run your own test client inside `flowlab-a` and a test server inside `flowlab-b` using `ip netns exec`. These rules do not change the host's default namespace. Remove the lab when finished:
+
+```bash
+sudo bash tools/cleanup_netns_lab.sh
+```
+
+The setup refuses to overwrite existing namespaces with the same dedicated names. Review the script and chosen impairment values before running it.
+
 ## Diagnosis flow
 
 ```mermaid
@@ -133,6 +151,7 @@ sequenceDiagram
 - The deque has a fixed capacity, so memory use does not grow without bound.
 - Responses are JSON, contain no secrets, and are marked `no-store`.
 - The diagnosis is deterministic and includes the threshold evidence that triggered it.
+- The optional traffic impairment lab confines `tc` and `iptables` changes to named network namespaces and a veth pair.
 - The server uses a lock around shared event state and a threaded HTTP server for concurrent local clients.
 
 ## Limits and next steps
