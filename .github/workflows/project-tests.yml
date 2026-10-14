@@ -15,3 +15,17 @@ jobs:
       - name: Run Flow Health Observatory tests
         working-directory: project1_flow_health_observatory
         run: python -m unittest discover -s tests -v
+      - name: Check Linux network lab scripts
+        working-directory: project1_flow_health_observatory
+        run: bash -n tools/setup_netns_lab.sh tools/cleanup_netns_lab.sh
+
+  collective-transport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run collective transport tests
+        working-directory: project2_collective_transport_lab
+        run: python -m unittest discover -s tests -v
